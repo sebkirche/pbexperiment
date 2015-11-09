@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<script name="UnixDateTime" type="DataType" id="1605">
+    <description>Unix Epoch timestamp</description>
+    <source language="Python"># custom data type script
+from datetime import datetime
+
+def parseByteRange(element, byteView, bitPos, bitLength, results):
+	# this method parses data starting at bitPos, bitLength bits are remaining
+	&quot;&quot;&quot;parseByteRange method&quot;&quot;&quot;
+
+	timestamp = byteView.readUnsignedInt(bitPos/8, 4, ENDIAN_LITTLE)
+
+	# create and set new value
+	value = Value()
+	
+	value.setString(datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S'))
+
+	# how many bytes were processed?
+	processedBytes = 4
+	iteration = 0
+
+	results.addElement(element, processedBytes, iteration, value)
+
+	# return number of processed bytes
+	return processedBytes
+
+def fillByteRange(value, byteArray, bitPos, bitLength):
+	# this method translates edited values back to the file
+	&quot;&quot;&quot;fillByteRange method&quot;&quot;&quot;
+
+	# write an integer back to file
+	# byteArray.writeUnsignedIntBits(highWord, bitPos, bitLength, ENDIAN_BIG)
+</source>
+</script>

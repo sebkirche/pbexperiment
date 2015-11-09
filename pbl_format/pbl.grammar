@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ufwb version="1.13">
+    <grammar name="PBL grammar" start="id:2" author="Sebastien" email="sebastien.kirch@free.fr" fileextension="pbl">
+        <description>Grammar for PBL files</description>
+        <scripts>
+            <script name="UnixDateTime" type="DataType" id="1605">
+                <description>Unix Epoch timestamp</description>
+                <source language="Python"># custom data type script
+from datetime import datetime
+
+def parseByteRange(element, byteView, bitPos, bitLength, results):
+	# this method parses data starting at bitPos, bitLength bits are remaining
+	&quot;&quot;&quot;parseByteRange method&quot;&quot;&quot;
+
+	timestamp = byteView.readUnsignedInt(bitPos/8, 4, ENDIAN_LITTLE)
+
+	# create and set new value
+	value = Value()
+	
+	value.setString(datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S'))
+
+	# how many bytes were processed?
+	processedBytes = 4
+	iteration = 0
+
+	results.addElement(element, processedBytes, iteration, value)
+
+	# return number of processed bytes
+	return processedBytes
+
+def fillByteRange(value, byteArray, bitPos, bitLength):
+	# this method translates edited values back to the file
+	&quot;&quot;&quot;fillByteRange method&quot;&quot;&quot;
+
+	# write an integer back to file
+	# byteArray.writeUnsignedIntBits(highWord, bitPos, bitLength, ENDIAN_BIG)
+</source>
+            </script>
+        </scripts>
+        <structure name="PB lib" id="2" encoding="windows-1252" endian="little" signed="no" order="variable">
+            <structure name="ANSI lib" id="3" repeatmin="0" encoding="windows-1252">
+                <structref name="HDR_block" id="5" structure="id:4"/>
+                <structref name="FRE_block" id="7" structure="id:6"/>
+                <structref name="NOD_block" id="9" structure="id:8"/>
+            </structure>
+            <structure name="UNICODE lib" id="11" repeatmin="0" encoding="UTF-16LE">
+                <structref name="HDR_UNI_block" id="13" structure="id:12"/>
+                <structref name="FRE_block" id="14" structure="id:6"/>
+                <structref name="NOD_UNI_block" id="16" structure="id:15"/>
+            </structure>
+        </structure>
+        <structure name="HDR_block" id="4" length="512" encoding="windows-1252" endian="little" signed="no">
+            <string name="HDR" mustmatch="yes" id="19" fillcolor="FF0000" type="fixed-length" length="4">
+                <fixedvalues>
+                    <fixedvalue name="sign" value="HDR*"/>
+                </fixedvalues>
+            </string>
+            <binary name="ansi_pb_sig" mustmatch="yes" id="20" length="14">
+                <fixedvalues>
+                    <fixedvalue name="ansi" value="506F7765724275696C6465720000"/>
+                </fixedvalues>
+            </binary>
+            <string name="PBL_fmt" mustmatch="yes" id="21" type="fixed-length" length="4">
+                <fixedvalues>
+                    <fixedvalue name="4" value="0400"/>
+                    <fixedvalue name="5" value="0500"/>
+                    <fixedvalue name="6" value="0600"/>
+                </fixedvalues>
+            </string>
+            <custom name="date_time" id="22" length="4" script="id:1605"/>
+            <number name="unk" id="23" type="integer" length="2"/>
+            <string name="comment" id="24" type="fixed-length" length="256"/>
+            <offset name="first_scc" id="26" length="4" references="id:25" follownullreference="yes"/>
+            <number name="scc_len" id="27" type="integer" length="4"/>
+        </structure>
+        <structure name="HDR_UNI_block" id="12" length="1024" encoding="UTF-16LE" endian="little" signed="no">
+            <string name="HDR" mustmatch="yes" id="29" type="fixed-length" length="4" encoding="windows-1252">
+                <fixedvalues>
+                    <fixedvalue name="HDR" value="HDR*"/>
+                </fixedvalues>
+            </string>
+            <binary name="uni_pb_sig" mustmatch="yes" id="30" length="28">
+                <fixedvalues>
+                    <fixedvalue name="uni" value="50006F007700650072004200750069006C0064006500720000000000"/>
+                </fixedvalues>
+            </binary>
+            <string name="PBL_fmt" mustmatch="yes" id="31" type="fixed-length" length="8">
+                <fixedvalues>
+                    <fixedvalue name="4" value="0400"/>
+                    <fixedvalue name="5" value="0500"/>
+                    <fixedvalue name="6" value="0600"/>
+                </fixedvalues>
+            </string>
+            <custom name="date_time" id="32" length="4" script="id:1605"/>
+            <number name="unk" id="33" type="integer" length="2"/>
+            <string name="comment" id="34" type="fixed-length" length="512"/>
+            <offset name="first_scc" id="35" length="1" references="id:25" follownullreference="yes"/>
+            <number name="scc_len" id="36" type="integer" length="4"/>
+        </structure>
+        <structure name="FRE_block" id="6" length="512" extends="id:38" encoding="windows-1252" endian="little" signed="no">
+            <string name="FRE" mustmatch="yes" id="39" fillcolor="FF2600" type="fixed-length" length="4">
+                <fixedvalues>
+                    <fixedvalue name="FRE" value="FRE*"/>
+                </fixedvalues>
+            </string>
+            <number name="next_fre_block" id="40" type="integer" length="4"/>
+            <binary name="&lt;binary&gt;" id="41" length="remaining"/>
+        </structure>
+        <structure name="NOD_block" id="8" length="3072" encoding="windows-1252" endian="little" signed="no">
+            <string name="NOD" mustmatch="yes" id="43" fillcolor="FF0000" type="fixed-length" length="4">
+                <fixedvalues>
+                    <fixedvalue name="NOD" value="NOD*"/>
+                </fixedvalues>
+            </string>
+            <offset name="next_left_nod" id="44" length="4" references="id:8" follownullreference="yes"/>
+            <offset name="parent_nod" id="45" length="4" references="id:8" follownullreference="yes"/>
+            <offset name="next_right_nod" id="46" length="4" references="id:8" follownullreference="yes"/>
+            <number name="free_space" id="47" type="integer" length="2">
+                <description>Space left in block, initial = 3040</description>
+            </number>
+            <offset name="last_alpha" id="49" length="2" references="id:48" relative-to="id:8" follownullreference="yes"/>
+            <number name="entries_count" id="50" type="integer" length="2"/>
+            <offset name="first_alpha" id="51" length="2" references="id:48" relative-to="id:8" follownullreference="yes"/>
+            <binary name="padding" id="52" length="8"/>
+            <structref name="ENT_block" id="54" repeatmin="0" repeatmax="50" structure="id:53"/>
+        </structure>
+        <structure name="NOD_UNI_block" id="15" length="3072" encoding="UTF-16LE" endian="little" signed="no">
+            <string name="NOD" mustmatch="yes" id="56" type="fixed-length" length="4" encoding="windows-1252">
+                <fixedvalues>
+                    <fixedvalue name="NOD" value="NOD*"/>
+                </fixedvalues>
+            </string>
+            <offset name="next_left_nod" id="57" length="4" references="id:15" follownullreference="yes"/>
+            <offset name="parent_nod" id="58" length="4" references="id:15" follownullreference="yes"/>
+            <offset name="next_right_nod" id="59" length="4" references="id:15" follownullreference="yes"/>
+            <number name="free_space" id="60" type="integer" length="2"/>
+            <offset name="last_alpha" id="62" length="2" references="id:61" relative-to="id:15" follownullreference="yes"/>
+            <number name="entries_count" id="63" type="integer" length="2"/>
+            <offset name="first_alpha" id="64" length="2" references="id:61" relative-to="id:15" follownullreference="yes"/>
+            <binary name="padding" id="65" length="8"/>
+            <structref name="ENT_UNI_block" id="67" repeatmin="0" repeatmax="50" structure="id:66"/>
+        </structure>
+        <structure name="ENT_block" id="53" encoding="windows-1252" endian="little" signed="no">
+            <string name="ENT" mustmatch="yes" id="69" fillcolor="FF557F" type="fixed-length" length="4">
+                <fixedvalues>
+                    <fixedvalue name="ENT" value="ENT*"/>
+                </fixedvalues>
+            </string>
+            <string name="PBL_format" mustmatch="yes" id="70" type="fixed-length" length="4">
+                <fixedvalues>
+                    <fixedvalue name="4" value="0400"/>
+                    <fixedvalue name="5" value="0500"/>
+                    <fixedvalue name="6" value="0600"/>
+                </fixedvalues>
+            </string>
+            <offset name="first_data_block" id="72" length="4" references="id:71" follownullreference="yes"/>
+            <number name="object_size" id="73" type="integer" length="4"/>
+            <custom name="date_time" id="74" fillcolor="E1FFFE" length="4" script="id:1605"/>
+            <number name="comment_len" id="75" type="integer" length="2"/>
+            <number name="name_len" id="76" type="integer" length="2"/>
+            <string name="object_name" id="77" fillcolor="55AAFF" type="fixed-length" length="name_len"/>
+        </structure>
+        <structure name="ENT_UNI_block" id="66" encoding="UTF-16LE" endian="little" signed="no">
+            <string name="ENT" mustmatch="yes" id="79" fillcolor="FF557F" type="fixed-length" length="4" encoding="windows-1252">
+                <fixedvalues>
+                    <fixedvalue name="ENT" value="ENT*"/>
+                </fixedvalues>
+            </string>
+            <string name="PBL_format" mustmatch="yes" id="80" type="fixed-length" length="8">
+                <fixedvalues>
+                    <fixedvalue name="4" value="0400"/>
+                    <fixedvalue name="5" value="0500"/>
+                    <fixedvalue name="6" value="0600"/>
+                </fixedvalues>
+            </string>
+            <offset name="first_data" id="81" length="4" references="id:71" follownullreference="yes"/>
+            <number name="object_size" id="82" type="integer" length="4"/>
+            <custom name="date_time" id="83" length="4" script="id:1605"/>
+            <number name="comment_len" id="84" type="integer" length="2"/>
+            <number name="name_len" id="85" type="integer" length="2"/>
+            <string name="object_name" id="86" fillcolor="55AAFF" type="fixed-length" length="name_len"/>
+        </structure>
+        <structure name="DAT_block" id="71" length="512" alignment="0" extends="id:38" encoding="windows-1252" endian="little" signed="no">
+            <string name="DAT" mustmatch="yes" id="88" fillcolor="55AA00" type="fixed-length" length="4">
+                <fixedvalues>
+                    <fixedvalue name="DAT-block" value="DAT*"/>
+                </fixedvalues>
+            </string>
+            <offset name="next_block" id="89" length="4" references="id:71" follownullreference="yes"/>
+            <number name="data_len" id="90" type="integer" length="2"/>
+        </structure>
+        <structure name="DATSCC_block" id="25" extends="id:71">
+            <string name="DAT" id="92" type="fixed-length"/>
+            <offset name="next_block" id="93" references="id:25"/>
+            <structref name="scc_part" id="96" structure="id:95"/>
+        </structure>
+        <structure name="SCC_new_block" id="95" length="0" encoding="windows-1252" endian="little" signed="no">
+            <string name="SCC" id="98" type="fixed-length" length="4">
+                <fixedvalues>
+                    <fixedvalue name="SCC" value="SCC*"/>
+                </fixedvalues>
+            </string>
+            <structref name="SCC_Name_Version" id="100" repeatmin="0" repeatmax="50" structure="id:99"/>
+        </structure>
+        <structure name="SCC_Name_Version" id="99" length="0" encoding="ISO_8859-1:1987" endian="little" signed="no">
+            <string name="name" id="102" fillcolor="FFFF7F" type="zero-terminated"/>
+            <string name="version" id="103" fillcolor="FFAAFF" type="zero-terminated"/>
+        </structure>
+        <structure name="TRL_block" id="105" encoding="windows-1252" endian="little" signed="no">
+            <string name="TRL" id="106" type="fixed-length" length="4">
+                <fixedvalues>
+                    <fixedvalue name="TRL" value="TRL*"/>
+                </fixedvalues>
+            </string>
+            <offset name="&lt;HDR&gt;" id="107" length="4" references="id:4" follownullreference="yes"/>
+        </structure>
+        <structure name="linked-block" id="38" encoding="windows-1252" endian="little" signed="no">
+            <string name="signature" id="109" type="fixed-length" length="4"/>
+            <offset name="next_block" id="110" length="4" references="id:38" follownullreference="yes"/>
+        </structure>
+        <structure name="linked_str" id="48" encoding="windows-1252" endian="big" signed="no">
+            <string name="name" id="112" type="zero-terminated"/>
+        </structure>
+        <structure name="linked_uni_str" id="61" encoding="UTF-16LE" endian="big" signed="no">
+            <string name="name" id="114" type="zero-terminated"/>
+        </structure>
+    </grammar>
+</ufwb>
